@@ -1,0 +1,496 @@
+神经网络领域的numpy
+安装：
+https://pytorch.org/
+
+pip3 install torch torchvision
+
+#tensor
+import torch
+import numpy as np
+
+np_data = np.arange(6).reshape((2, 3))
+torch_data = torch.from_numpy(np_data)
+tensor2array = torch_data.numpy()
+print(
+    '\nnumpy array:', np_data,         
+    '\ntorch tensor:', torch_data,      
+    '\ntensor to array:', tensor2array, 
+)
+
+数据类型dtype，8种
+16-bit floating point	torch.float16 or torch.half
+32-bit floating point	torch.float32 or torch.float	
+64-bit floating point	torch.float64 or torch.double	
+	
+8-bit integer (unsigned)	torch.uint8	
+8-bit integer (signed)	torch.int8	
+16-bit integer (signed)	torch.int16 or torch.short	
+32-bit integer (signed)	torch.int32 or torch.int	
+64-bit integer (signed)	torch.int64 or torch.long	
+
+# abs 绝对值计算
+data = [-1, -2, 1, 2]
+tensor = torch.FloatTensor(data)  
+print(
+    '\nabs',
+    '\nnumpy: ', np.abs(data),          
+    '\ntorch: ', torch.abs(tensor)     
+)
+
+# sin   三角函数 sin
+print(
+    '\nsin',
+    '\nnumpy: ', np.sin(data),      
+    '\ntorch: ', torch.sin(tensor)  
+)
+
+# mean  均值
+print(
+    '\nmean',
+    '\nnumpy: ', np.mean(data),       
+    '\ntorch: ', torch.mean(tensor)    
+)
+
+data = [[1,2], [3,4]]
+tensor = torch.FloatTensor(data)  
+# 正确
+print(
+    '\nmatrix multiplication (matmul)',
+    '\nnumpy: ', np.matmul(data, data),    
+    '\ntorch: ', torch.mm(tensor, tensor)   
+)
+
+
+#变量
+import torch
+from torch.autograd import Variable 
+
+tensor = torch.FloatTensor([[1,2],[3,4]])
+
+variable = Variable(tensor, requires_grad=True)
+
+print(tensor)
+
+print(variable)
+
+t_out = torch.mean(tensor*tensor)       
+v_out = torch.mean(variable*variable)   
+print(t_out)
+print(v_out)    
+
+v_out.backward()    # 模拟 v_out 的误差反向传递
+
+print(variable.grad)    # 初始 Variable 的梯度
+
+print(variable)     #  Variable 形式
+
+print(variable.data)    # tensor 形式
+
+print(variable.data.numpy())    # numpy 形式
+
+#数据集
+#内置
+torchvision.datasets
+MNIST
+COCO（用于图像标注和目标检测）(Captioning and Detection)
+LSUN Classification
+ImageFolder
+Imagenet-12
+CIFAR10 and CIFAR100
+STL10
+
+datasets.MNIST(root, train=True, transform=None, target_transform=None, download=False)
+
+#自定义
+torch.utils.data.Dataset
+Class dateset(Dataset)
+ def __len__(self):
+ def __getitem__(self, idx):
+len(dataset)
+dataset[i]
+
+#迭代
+for i in range(len(dataset)):
+  dataset[i]
+
+torch.utils.data.DataLoader
+dataloader = DataLoader(dataset, batch_size=4,
+            shuffle=True, num_workers=4)
+            
+#网络层
+import torch.nn as nn
+import torch.nn.functional as F
+#线性层
+class torch.nn.Linear(in_features, out_features, bias=True)
+torch.nn.functional.linear(input, weight, bias=None)
+
+#卷积层
+class torch.nn.Conv1d(in_channels, out_channels, kernel_size, 
+    stride=1, padding=0, dilation=1, groups=1, bias=True)
+dilation: 用于控制内核点之间的距离
+空洞卷积
+groups: 控制输入和输出之间的连接
+28*28*2 3*3*64 26*26*64   2*3*3*64
+28*28*1 3*3*32 26*26*32   1*3*3*32
+28*28*1 3*3*32 26*26*32   1*3*3*32
+torch.nn.functional.conv1d(input, weight, bias=None, 
+      stride=1, padding=0, dilation=1, groups=1)
+class torch.nn.Conv2d
+1d 100*1*batchsize->3*1*64->100*64*batchsize
+2d 224*224*3*batchsize->3*3*3*64->224*224*64*batchsize
+3d 3*3*3*64
+class torch.nn.Conv3d
+
+class torch.nn.ConvTranspose1d(in_channels, out_channels, 
+        kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True)
+torch.nn.functional.conv_transpose1d(input, weight, bias=None, 
+          stride=1, padding=0, output_padding=0, groups=1)
+class torch.nn.ConvTranspose2d
+class torch.nn.ConvTranspose3d
+
+#池化层
+class torch.nn.MaxPool1d(kernel_size, stride=None, 
+        padding=0, dilation=1, return_indices=False, ceil_mode=False)
+return_indices - 如果等于True，会返回输出最大值的序号
+ceil_mode - 如果等于True，计算输出信号大小的时候，会使用向上取整，代替默认的向下取整的操作
+torch.nn.functional.max_pool1d(input, kernel_size, stride=None, padding=0, 
+       dilation=1, ceil_mode=False, return_indices=False)
+class torch.nn.MaxPool2d
+class torch.nn.MaxPool3d   
+class torch.nn.MaxUnpool1d(kernel_size, stride=None, padding=0) 
+torch.nn.functional.max_unpool1d(input, indices, 
+            kernel_size, stride=None, padding=0, output_size=None)
+2d
+3d
+
+class torch.nn.AvgPool1d(kernel_size, stride=None, padding=0, 
+            ceil_mode=False, count_include_pad=True)
+torch.nn.functional.avg_pool1d(input, kernel_size, stride=None, padding=0, 
+            ceil_mode=False, count_include_pad=True)
+2d
+3d
+
+class torch.nn.FractionalMaxPool2d(kernel_size, output_size=None, output_ratio=None, 
+                return_indices=False, _random_samples=None)
+#对输入信号提供2维的幂平均池化操作
+class torch.nn.LPPool2d(norm_type, kernel_size, stride=None, ceil_mode=False)
+torch.nn.functional.lp_pool2d(input, norm_type, kernel_size, stride=None, ceil_mode=False)
+
+class torch.nn.AdaptiveMaxPool1d(output_size, return_indices=False)
+torch.nn.functional.adaptive_max_pool1d(input, output_size, return_indices=False)
+2d
+
+class torch.nn.AdaptiveAvgPool1d(output_size)
+torch.nn.functional.adaptive_avg_pool1d(input, output_size)
+2d
+
+#激活函数
+class torch.nn.ReLU(inplace=False)
+torch.nn.functional.relu(input, inplace=False)
+class torch.nn.ReLU6(inplace=False)
+torch.nn.functional.relu6(input, inplace=False)
+class torch.nn.ELU(alpha=1.0, inplace=False)
+torch.nn.functional.elu(input, alpha=1.0, inplace=False)
+class torch.nn.PReLU(num_parameters=1, init=0.25)
+torch.nn.functional.prelu(input, weight)
+class torch.nn.LeakyReLU(negative_slope=0.01, inplace=False)
+torch.nn.functional.leaky_relu(input, negative_slope=0.01, inplace=False)
+class torch.nn.Threshold(threshold, value, inplace=False) 
+torch.nn.functional.threshold(input, threshold, value, inplace=False)
+class torch.nn.Tanh()
+torch.nn.functional.tanh(input)
+class torch.nn.Hardtanh(min_value=-1, max_value=1, inplace=False)
+torch.nn.functional.hardtanh(input, min_val=-1.0, max_val=1.0, inplace=False)
+class torch.nn.Sigmoid()
+torch.nn.functional.sigmoid(input)
+class torch.nn.LogSigmoid()
+torch.nn.functional.logsigmoid(input)
+class torch.nn.Softplus(beta=1, threshold=20)
+torch.nn.functional.softplus(input, beta=1, threshold=20)
+class torch.nn.Softshrink(lambd=0.5)
+torch.nn.functional.softshrink(input, lambd=0.5)
+class torch.nn.Softmin()
+torch.nn.functional.softmin(input)
+class torch.nn.Softmax()
+torch.nn.functional.softmax(input)
+class torch.nn.LogSoftmax()
+torch.nn.functional.log_softmax(input)
+
+class torch.nn.BatchNorm1d(num_features, eps=1e-05, momentum=0.1, affine=True)
+torch.nn.functional.batch_norm(input, running_mean, running_var, 
+          weight=None, bias=None, training=False, momentum=0.1, eps=1e-05)
+2d
+3d
+
+#RNN
+class torch.nn.RNN( args, * kwargs)
+input_size – 输入x的特征数量。
+hidden_size – 隐层的特征数量。
+num_layers – RNN的层数。
+nonlinearity – 指定非线性函数使用tanh还是relu。默认是tanh。
+bias – 如果是False，那么RNN层就不会使用偏置权重 $b_ih$和$b_hh$,默认是True
+dropout – 如果值非零，那么除了最后一层外，其它层的输出都会套上一个dropout层。
+bidirectional – 如果True，将会变成一个双向RNN，默认为False。
+class torch.nn.LSTM( args, * kwargs)
+class torch.nn.GRU()
+#单个RNN细胞
+class torch.nn.RNNCell(input_size, hidden_size, bias=True, nonlinearity='tanh')
+class torch.nn.LSTMCell(input_size, hidden_size, bias=True)
+class torch.nn.GRUCell(input_size, hidden_size, bias=True)
+
+#droupout
+class torch.nn.Dropout(p=0.5, inplace=False)
+p - 将元素置0的概率。默认值：0.5
+torch.nn.functional.dropout(input, p=0.5, training=False, inplace=False)
+
+#Embedding层
+class torch.nn.Embedding(num_embeddings, embedding_dim, 
+    padding_idx=None, max_norm=None, norm_type=2, scale_grad_by_freq=False, sparse=False)
+
+#损失函数
+class torch.nn.L1Loss(size_average=True)
+torch.nn.functional.l1_loss(input, target, size_average=True)
+class torch.nn.SmoothL1Loss(size_average=True)
+torch.nn.functional.smooth_l1_loss(input, target, size_average=True)
+class torch.nn.MSELoss(size_average=True)
+torch.nn.functional.mse_loss(input, target, size_average=True)
+class torch.nn.CrossEntropyLoss(weight=None, size_average=True)
+torch.nn.functional.cross_entropy(input, target, weight=None, size_average=True)
+class torch.nn.BCELoss(weight=None, size_average=True)
+torch.nn.functional.binary_cross_entropy(input, target, weight=None, size_average=True)
+#最大似然函数
+class torch.nn.NLLLoss(weight=None, size_average=True)
+torch.nn.functional.nll_loss(input, target, weight=None, size_average=True)
+class torch.nn.NLLLoss2d(weight=None, size_average=True)
+torch.nn.functional.nll_loss2d(input, target, weight=None, size_average=True)
+class torch.nn.KLDivLoss(weight=None, size_average=True)
+torch.nn.functional.kl_div(input, target, size_average=True)
+
+class torch.nn.HingeEmbeddingLoss(size_average=True)
+class torch.nn.CosineEmbeddingLoss(margin=0, size_average=True)
+
+#填充
+torch.nn.functional.pad(input, pad, mode='constant', value=0)
+
+import torch.nn as nn
+import torch.nn.functional as F
+#maxunpool
+pool = nn.MaxPool2d(2, stride=2, return_indices=True)
+unpool = nn.MaxUnpool2d(2, stride=2)
+input = Variable(torch.Tensor([[[[ 1,  2,  3,  4],
+    [ 5,  6,  7,  8],
+    [ 9, 10, 11, 12],
+    [13, 14, 15, 16]]]]))
+output, indices = pool(input)
+print(output,indices)
+unpool(output, indices)
+
+#优化器
+torch.optim
+class torch.optim.Optimizer(params, defaults)
+step()
+zero_grad()
+
+class torch.optim.Adadelta(params, lr=1.0, rho=0.9, eps=1e-06, weight_decay=0)
+class torch.optim.Adagrad(params, lr=0.01, lr_decay=0, weight_decay=0)
+class torch.optim.Adam(params, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+class torch.optim.Adamax(params, lr=0.002, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+class torch.optim.ASGD(params, lr=0.01, lambd=0.0001, alpha=0.75, t0=1000000.0, weight_decay=0)
+class torch.optim.LBFGS(params, lr=1, max_iter=20, max_eval=None, tolerance_grad=1e-05, tolerance_change=1e-09, history_size=100, line_search_fn=None)
+class torch.optim.RMSprop(params, lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False)
+class torch.optim.Rprop(params, lr=0.01, etas=(0.5, 1.2), step_sizes=(1e-06, 50))
+class torch.optim.SGD(params, lr=, momentum=0, dampening=0, weight_decay=0, nesterov=False)
+
+#模型
+两种方法
+#线性模型
+
+net = torch.nn.Sequential(
+    torch.nn.Linear(1, 10),
+    torch.nn.ReLU(),
+    torch.nn.Linear(10, 1)
+)
+
+class LinearNet(torch.nn.Module):
+    def __init__(self, n_feature, n_hidden, n_output):
+        super(LinearNet, self).__init__()
+        self.hidden = torch.nn.Linear(n_feature, n_hidden)
+        self.predict = torch.nn.Linear(n_hidden, n_output)
+
+    def forward(self, x):
+        x = F.relu(self.hidden(x))
+        x = self.predict(x)
+        return x
+
+net1 = LinearNet(1, 10, 1) 
+
+#卷积模型
+class CNN(nn.Module):
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Sequential(  
+            nn.Conv2d(
+            in_channels=1,      
+            out_channels=16,   
+            kernel_size=5,     
+            stride=1,         
+            padding=2, 
+            ),      
+            nn.ReLU(),    
+            nn.MaxPool2d(kernel_size=2),   
+        )
+        self.conv2 = nn.Sequential(  
+            nn.Conv2d(16, 32, 5, 1, 2), 
+            nn.ReLU(),  
+            nn.MaxPool2d(2),  
+        )
+        self.out = nn.Linear(32 * 7 * 7, 10) 
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = x.view(x.size(0), -1)  
+        output = self.out(x)
+        return output
+cnn = CNN()
+print(cnn) 
+
+#RNN
+class RNN(nn.Module):
+    def __init__(self):
+        super(RNN, self).__init__()
+
+        self.rnn = nn.LSTM(     
+            input_size=28,      
+            hidden_size=64,     
+            num_layers=1,      
+            batch_first=True,   
+        )
+
+        self.out = nn.Linear(64, 10)    
+
+    def forward(self, x):   
+        # x shape (batch, time_step, input_size)
+        # r_out shape (batch, time_step, output_size)
+        # h_n shape (n_layers, batch, hidden_size) .
+        # h_c shape (n_layers, batch, hidden_size)     
+        r_out, (h_n, h_c) = self.rnn(x, None)   
+        # 选取最后一个时间点的 r_out 输出
+        # 这里 r_out[:, -1, :] 的值也是 h_n 的值
+        out = self.out(r_out[:, -1, :])
+        return out
+
+rnn = RNN()
+print(rnn)
+
+#gpu加速
+将所有数据和操作加上.cuda()
+x = x.cuda() 
+y = y.cuda() 
+cnn = CNN()
+cnn.cuda()  
+
+#保存
+torch.save(net, 'net.pkl')  #保存整个网络
+torch.save(net.state_dict(), 'net_params.pkl')   #只保存网络中的参数
+#提取
+net = torch.load('net.pkl')
+net3 = 
+net3.load_state_dict(torch.load('net_params.pkl'))
+
+#minist
+import torch
+import torch.nn as nn
+import torch.utils.data as Data
+import torchvision      
+import matplotlib.pyplot as plt
+
+# Hyper Parameters
+EPOCH = 10          
+BATCH_SIZE = 50
+LR = 0.001        # 学习率
+DOWNLOAD_MNIST = True  # 如果你已经下载好了mnist数据就写上 False
+
+train_data = torchvision.datasets.MNIST(
+    root='./mnist/',    # 保存或者提取位置
+    train=True,  # this is training data
+    transform=torchvision.transforms.ToTensor(), 
+    download=DOWNLOAD_MNIST # 没下载就下载, 下载了就不用再下了
+)
+
+test_data = torchvision.datasets.MNIST(root='./mnist/', train=False)
+
+train_loader = Data.DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
+
+test_x = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)/255.  
+test_y = test_data.test_labels
+
+class CNN(nn.Module):
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Sequential(  
+            nn.Conv2d(
+            in_channels=1,      
+            out_channels=16,   
+            kernel_size=5,     
+            stride=1,         
+            padding=2, 
+            ),      
+            nn.ReLU(),    
+            nn.MaxPool2d(kernel_size=2),   
+        )
+        self.conv2 = nn.Sequential(  
+            nn.Conv2d(16, 32, 5, 1, 2), 
+            nn.ReLU(),  
+            nn.MaxPool2d(2),  
+        )
+        self.out = nn.Linear(32 * 7 * 7, 10) 
+      
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv_new(x)
+        x = self.conv2(x)
+        x = x.view(x.size(0), -1)  
+        output = self.out(x)
+        return output
+        
+cnn=CNN()
+optimizer = torch.optim.Adam(cnn.parameters(), lr=LR)   # optimize all cnn parameters
+loss_func = nn.CrossEntropyLoss()   # the target label is not one-hotted
+
+# training and testing
+for epoch in range(EPOCH):
+    for step, (b_x, b_y) in enumerate(train_loader):   # 分配 batch data, normalize x when iterate train_loader
+        output = cnn(b_x)               # cnn output
+        loss = loss_func(output, b_y)   # cross entropy loss
+        optimizer.zero_grad()           # clear gradients for this training step
+        loss.backward()              # backpropagation, compute gradients
+        optimizer.step()              # apply gradients
+
+    test_output = cnn(test_x)
+    pred_y = torch.max(test_output, 1)[1].data.numpy()
+    accuracy = float((pred_y == test_y.data.numpy()).astype(int).sum()) / float(test_y.size(0))
+    print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
+    
+#GPU
+test_x = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor).cuda()/255.  
+test_y = test_data.test_labels.cuda()
+cnn.cuda()
+optimizer = torch.optim.Adam(cnn.parameters(), lr=LR)   # optimize all cnn parameters
+loss_func = nn.CrossEntropyLoss()   # the target label is not one-hotted
+
+for epoch in range(EPOCH):
+    for step, (b_x, b_y) in enumerate(train_loader):   # 分配 batch data, normalize x when iterate train_loader
+        b_x=b_x.cuda()
+        b_y=b_y.cuda()
+        output = cnn(b_x)               # cnn output
+        loss = loss_func(output, b_y)   # cross entropy loss
+        optimizer.zero_grad()           # clear gradients for this training step
+        loss.backward()              # backpropagation, compute gradients
+        optimizer.step()              # apply gradients
+
+    test_output = cnn(test_x)
+    pred_y = torch.max(test_output, 1)[1].cuda().data
+    accuracy = torch.sum(pred_y == test_y).cuda().type(torch.FloatTensor) / test_y.size(0)
+    print('Epoch: ', epoch, '| train loss: %.4f' % loss.data, '| test accuracy: %.2f' % accuracy)
+    
