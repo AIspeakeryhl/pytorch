@@ -1,0 +1,82 @@
+使用torchaudio处理音频
+kaldi
+
+!pip3 install torchaudio
+
+import torch
+import torchaudio
+import matplotlib.pyplot as plt
+
+filename = "steam-train-whistle-daniel_simon-converted-from-mp3.wav"
+waveform, sample_rate = torchaudio.load(filename)
+
+print("Shape of waveform: {}".format(waveform.size()))
+print("Sample rate of waveform: {}".format(sample_rate))
+
+plt.figure()
+plt.plot(waveform.t().numpy())
+
+转换 
+
+Resample ：将波形重采样为其他采样率。
+Spectrogram ：根据波形创建频谱图。
+MelScale ：使用转换矩阵将普通STFT转换为Mel频率STFT。
+AmplitudeToDB ：这将频谱图从功率/振幅标度转换为分贝标度。20log()
+MFCC ：从波形创建梅尔频率倒谱系数。
+MelSpectrogram ：使用PyTorch中的STFT功能从波形创建MEL频谱图。
+MuLawEncoding ：基于mu-law压扩对波形进行编码。
+MuLawDecoding ：解码mu-law编码的波形。
+
+#对数频谱
+specgram = torchaudio.transforms.Spectrogram()(waveform)
+
+print("Shape of spectrogram: {}".format(specgram.size()))
+
+plt.figure()
+plt.imshow(specgram.log2()[0,:,:].numpy(), cmap='gray')
+
+#对数mel频谱
+specgram = torchaudio.transforms.MelSpectrogram()(waveform)
+
+print("Shape of spectrogram: {}".format(specgram.size()))
+
+plt.figure()
+p = plt.imshow(specgram.log2()[0,:,:].detach().numpy(), cmap='gray')
+
+#重新采样
+new_sample_rate = sample_rate/10
+
+channel = 0
+transformed = torchaudio.transforms.Resample(sample_rate, new_sample_rate)(waveform[channel,:].view(1,-1))
+
+print("Shape of transformed waveform: {}".format(transformed.size()))
+
+plt.figure()
+plt.plot(transformed[0,:].numpy())
+plt.plot(waveform[0,:].numpy())
+
+#基于Mu-Law编码对信号进行编码
+#Mu-Law是由国际电话电报咨询委员会颁布的用于脉码调制的标准多媒体数字信号编、解码器（压缩/解压缩）运算法则。
+#作为一种压缩扩展的方法，其可以改善信噪比率而不需要增添更多的数据。
+print("Min of waveform: {}\nMax of waveform: {}\nMean of waveform: {}".format(waveform.min(), waveform.max(), waveform.mean()))
+
+def normalize(tensor):
+    tensor_minusmean = tensor - tensor.mean()
+    return tensor_minusmean/tensor_minusmean.abs().max()
+
+transformed = torchaudio.transforms.MuLawEncoding()(waveform)
+
+print("Shape of transformed waveform: {}".format(transformed.size()))
+
+plt.figure()
+plt.plot(transformed[0,:].numpy())
+plt.plot(waveform[0,:].numpy())
+
+reconstructed = torchaudio.transforms.MuLawDecoding()(transformed)
+
+print("Shape of recovered waveform: {}".format(reconstructed.size()))
+
+plt.figure()
+plt.plot(reconstructed[0,:].numpy())
+plt.plot(waveform[0,:].numpy())
+
